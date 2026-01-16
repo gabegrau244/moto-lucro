@@ -27,6 +27,8 @@ button { background:#007aff; color:white; border:none; border-radius:8px; }
 <div class="card">
 <input id="modelo" placeholder="Modelo da moto">
 <input id="compra" placeholder="Valor de compra (R$)">
+<input id="pecas" placeholder="Peças / manutenção (R$)">
+<input id="doc" placeholder="Documentação (R$)">
 <input id="venda" placeholder="Valor de venda (R$)">
 <button onclick="salvar()">Salvar</button>
 </div>
@@ -49,13 +51,12 @@ function salvar() {
     return;
   }
 
-  let compraNum = valorNumero(compra.value);
-  let vendaNum = valorNumero(venda.value);
-
   let moto = {
     modelo: modelo.value,
-    compra: compraNum,
-    venda: vendaNum,
+    compra: valorNumero(compra.value),
+    pecas: valorNumero(pecas.value),
+    doc: valorNumero(doc.value),
+    venda: valorNumero(venda.value),
     gastos: []
   };
 
@@ -87,23 +88,26 @@ function adicionarGasto(i) {
   listar();
 }
 
-function totalGastos(moto) {
-  return moto.gastos.reduce((s, g) => s + g.valor, 0);
+function totalGastosExtras(m) {
+  return m.gastos.reduce((s, g) => s + g.valor, 0);
 }
 
 function listar() {
   lista.innerHTML = "";
 
   motos.forEach((m, i) => {
-    let gastosTotal = totalGastos(m);
-    let lucro = (m.venda || 0) - (m.compra + gastosTotal);
+    let extras = totalGastosExtras(m);
+    let total = m.compra + m.pecas + m.doc + extras;
+    let lucro = m.venda - total;
     let classe = lucro >= 0 ? "lucro" : "prejuizo";
 
     lista.innerHTML += `
       <div class="card">
         <strong>${m.modelo}</strong>
         <p class="small">Compra: R$ ${m.compra.toFixed(2)}</p>
-        <p class="small">Gastos: R$ ${gastosTotal.toFixed(2)}</p>
+        <p class="small">Peças: R$ ${m.pecas.toFixed(2)}</p>
+        <p class="small">Documentação: R$ ${m.doc.toFixed(2)}</p>
+        <p class="small">Gastos extras: R$ ${extras.toFixed(2)}</p>
         <p class="small">Venda: R$ ${m.venda.toFixed(2)}</p>
         <p class="${classe}">Resultado: R$ ${lucro.toFixed(2)}</p>
 
@@ -123,6 +127,8 @@ function editar(i) {
   let m = motos[i];
   modelo.value = m.modelo;
   compra.value = m.compra;
+  pecas.value = m.pecas;
+  doc.value = m.doc;
   venda.value = m.venda;
   editIndex = i;
 }
@@ -140,11 +146,11 @@ function salvarLocal() {
 }
 
 function limpar() {
-  modelo.value = compra.value = venda.value = "";
+  modelo.value = compra.value = pecas.value = doc.value = venda.value = "";
 }
 
 listar();
 </script>
 
 </body>
-</html> 
+</html>

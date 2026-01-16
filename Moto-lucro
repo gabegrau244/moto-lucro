@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moto Lucro</title>
+
+<style>
+body { font-family: Arial, sans-serif; background:#f2f2f7; padding:20px; }
+h1 { text-align:center; }
+input, button, select { width:100%; padding:12px; margin:6px 0; font-size:16px; }
+button { background:#007aff; color:white; border:none; border-radius:8px; }
+.card { background:white; padding:15px; border-radius:10px; margin-top:15px; }
+.lucro { color:green; font-weight:bold; }
+.prejuizo { color:red; font-weight:bold; }
+.small { font-size:14px; color:#555; }
+.delete { background:#ff3b30; }
+.edit { background:#ff9500; margin-bottom:6px; }
+</style>
+</head>
+
+<body>
+
+<h1>🏍️ Moto Lucro</h1>
+
+<div class="card">
+<input id="modelo" placeholder="Modelo da moto">
+<input id="compra" type="number" placeholder="Valor de compra (R$)">
+<input id="pecas" type="number" placeholder="Peças / manutenção (R$)">
+<input id="doc" type="number" placeholder="Documentação (R$)">
+<input id="venda" type="number" placeholder="Valor de venda (R$)">
+<button onclick="salvar()">Salvar</button>
+</div>
+
+<h2>📋 Histórico</h2>
+<div id="lista"></div>
+
+<script>
+let motos = JSON.parse(localStorage.getItem("motos")) || [];
+let editIndex = null;
+
+function salvar() {
+  if (!modelo.value || !compra.value) {
+    alert("Preencha pelo menos modelo e valor de compra");
+    return;
+  }
+
+  let total = Number(compra.value) + Number(pecas.value||0) + Number(doc.value||0);
+  let lucro = (Number(venda.value||0)) - total;
+
+  let moto = {
+    modelo: modelo.value,
+    compra: Number(compra.value),
+    pecas: Number(pecas.value||0),
+    doc: Number(doc.value||0),
+    venda: Number(venda.value||0),
+    lucro: lucro
+  };
+
+  if (editIndex !== null) {
+    motos[editIndex] = moto;
+    editIndex = null;
+  } else {
+    motos.push(moto);
+  }
+
+  localStorage.setItem("motos", JSON.stringify(motos));
+  limpar();
+  listar();
+}
+
+function editar(i) {
+  let m = motos[i];
+  modelo.value = m.modelo;
+  compra.value = m.compra;
+  pecas.value = m.pecas;
+  doc.value = m.doc;
+  venda.value = m.venda;
+  editIndex = i;
+}
+
+function listar() {
+  lista.innerHTML = "";
+  motos.forEach((m, i) => {
+    let classe = m.lucro >= 0 ? "lucro" : "prejuizo";
+    lista.innerHTML += `
+      <div class="card">
+        <strong>${m.modelo}</strong>
+        <p class="small">Compra: R$ ${m.compra.toFixed(2)}</p>
+        <p class="small">Venda: R$ ${m.venda.toFixed(2)}</p>
+        <p class="${classe}">Resultado: R$ ${m.lucro.toFixed(2)}</p>
+        <button class="edit" onclick="editar(${i})">Editar</button>
+        <button class="delete" onclick="remover(${i})">Excluir</button>
+      </div>
+    `;
+  });
+}
+
+function remover(i) {
+  if (confirm("Excluir esta moto?")) {
+    motos.splice(i,1);
+    localStorage.setItem("motos", JSON.stringify(motos));
+    listar();
+  }
+}
+
+function limpar() {
+  modelo.value = compra.value = pecas.value = doc.value = venda.value = "";
+}
+
+listar();
+</script>
+
+</body>
+</html>

@@ -52,18 +52,12 @@ button {
 
 .edit { background:#ff9500; }
 .delete { background:#ff3b30; }
-.sell { background:#34c759; }
 
 .gasto {
   background:#f1f1f1;
   padding:8px;
   border-radius:6px;
   margin-top:5px;
-}
-
-.filters button {
-  background:#e5e5ea;
-  color:black;
 }
 </style>
 </head>
@@ -74,10 +68,22 @@ button {
 
 <!-- DASHBOARD -->
 <div class="dashboard">
-  <div class="box">Total investido<strong id="totalInvestido">R$ 0,00</strong></div>
-  <div class="box">Total vendido<strong id="totalVendido">R$ 0,00</strong></div>
-  <div class="box">Lucro total<strong id="lucroTotal">R$ 0,00</strong></div>
-  <div class="box">Motos cadastradas<strong id="qtdMotos">0</strong></div>
+  <div class="box">
+    Total investido
+    <strong id="totalInvestido">R$ 0,00</strong>
+  </div>
+  <div class="box">
+    Total vendido
+    <strong id="totalVendido">R$ 0,00</strong>
+  </div>
+  <div class="box">
+    Lucro total
+    <strong id="lucroTotal">R$ 0,00</strong>
+  </div>
+  <div class="box">
+    Motos cadastradas
+    <strong id="qtdMotos">0</strong>
+  </div>
 </div>
 
 <!-- CADASTRO -->
@@ -90,20 +96,12 @@ button {
 <button onclick="salvar()">Salvar</button>
 </div>
 
-<!-- FILTROS -->
-<div class="filters">
-<button onclick="filtro='todas'; listar()">📊 Todas</button>
-<button onclick="filtro='estoque'; listar()">📦 Em estoque</button>
-<button onclick="filtro='vendidas'; listar()">💰 Vendidas</button>
-</div>
-
 <h2>📋 Histórico</h2>
 <div id="lista"></div>
 
 <script>
 let motos = JSON.parse(localStorage.getItem("motos")) || [];
 let editIndex = null;
-let filtro = "todas";
 
 function valorNumero(v) {
   if (!v) return 0;
@@ -111,19 +109,22 @@ function valorNumero(v) {
 }
 
 function salvar() {
+  if (!modelo.value || !compra.value) {
+    alert("Preencha modelo e valor de compra");
+    return;
+  }
+
   let moto = {
     modelo: modelo.value,
     compra: valorNumero(compra.value),
     pecas: valorNumero(pecas.value),
     doc: valorNumero(doc.value),
     venda: valorNumero(venda.value),
-    gastos: [],
-    status: "estoque"
+    gastos: []
   };
 
   if (editIndex !== null) {
     moto.gastos = motos[editIndex].gastos;
-    moto.status = motos[editIndex].status;
     motos[editIndex] = moto;
     editIndex = null;
   } else {
@@ -139,6 +140,7 @@ function adicionarGasto(i) {
   let desc = prompt("Descrição do gasto:");
   let valor = prompt("Valor do gasto:");
   if (!desc || !valor) return;
+
   motos[i].gastos.push({ desc, valor: valorNumero(valor) });
   salvarLocal();
   listar();
@@ -156,35 +158,31 @@ function listar() {
   let lucroTotal = 0;
 
   motos.forEach((m, i) => {
-    if (
-      filtro === "estoque" && m.status !== "estoque" ||
-      filtro === "vendidas" && m.status !== "vendida"
-    ) return;
-
     let extras = totalExtras(m);
     let investido = m.compra + m.pecas + m.doc + extras;
     let lucro = m.venda - investido;
 
     totalInvestido += investido;
-    if (m.status === "vendida") {
-      totalVendido += m.venda;
-      lucroTotal += lucro;
-    }
+    totalVendido += m.venda;
+    lucroTotal += lucro;
 
     let classe = lucro >= 0 ? "lucro" : "prejuizo";
 
     lista.innerHTML += `
       <div class="card">
         <strong>${m.modelo}</strong>
-        <p class="small">Status: ${m.status === "estoque" ? "📦 Em estoque" : "💰 Vendida"}</p>
-        <p class="small">Investido: R$ ${investido.toFixed(2)}</p>
+        <p class="small">Compra: R$ ${m.compra.toFixed(2)}</p>
+        <p class="small">Peças: R$ ${m.pecas.toFixed(2)}</p>
+        <p class="small">Documentação: R$ ${m.doc.toFixed(2)}</p>
+        <p class="small">Gastos extras: R$ ${extras.toFixed(2)}</p>
         <p class="small">Venda: R$ ${m.venda.toFixed(2)}</p>
-        ${m.status === "vendida" ? `<p class="${classe}">Resultado: R$ ${lucro.toFixed(2)}</p>` : ""}
-        
-        ${m.gastos.map(g => `<div class="gasto">• ${g.desc}: R$ ${g.valor.toFixed(2)}</div>`).join("")}
+        <p class="${classe}">Resultado: R$ ${lucro.toFixed(2)}</p>
+
+        ${m.gastos.map(g => `
+          <div class="gasto">• ${g.desc}: R$ ${g.valor.toFixed(2)}</div>
+        `).join("")}
 
         <button onclick="adicionarGasto(${i})">Adicionar gasto</button>
-        ${m.status === "estoque" ? `<button class="sell" onclick="vender(${i})">Marcar como vendida</button>` : ""}
         <button class="edit" onclick="editar(${i})">Editar</button>
         <button class="delete" onclick="remover(${i})">Excluir</button>
       </div>
@@ -195,12 +193,6 @@ function listar() {
   document.getElementById("totalVendido").innerText = `R$ ${totalVendido.toFixed(2)}`;
   document.getElementById("lucroTotal").innerText = `R$ ${lucroTotal.toFixed(2)}`;
   document.getElementById("qtdMotos").innerText = motos.length;
-}
-
-function vender(i) {
-  motos[i].status = "vendida";
-  salvarLocal();
-  listar();
 }
 
 function editar(i) {

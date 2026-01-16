@@ -8,15 +8,57 @@
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f7; padding:20px; }
 h1 { text-align:center; }
-input, button { width:100%; padding:12px; margin:6px 0; font-size:16px; }
-button { background:#007aff; color:white; border:none; border-radius:8px; }
-.card { background:white; padding:15px; border-radius:10px; margin-top:15px; }
+
+.dashboard {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.box {
+  background:white;
+  padding:12px;
+  border-radius:10px;
+  text-align:center;
+}
+
+.box strong { display:block; font-size:18px; }
+
+input, button {
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  font-size:16px;
+}
+
+button {
+  background:#007aff;
+  color:white;
+  border:none;
+  border-radius:8px;
+}
+
+.card {
+  background:white;
+  padding:15px;
+  border-radius:10px;
+  margin-top:15px;
+}
+
 .lucro { color:green; font-weight:bold; }
 .prejuizo { color:red; font-weight:bold; }
 .small { font-size:14px; color:#555; }
+
 .edit { background:#ff9500; }
 .delete { background:#ff3b30; }
-.gasto { background:#f1f1f1; padding:8px; border-radius:6px; margin-top:5px; }
+
+.gasto {
+  background:#f1f1f1;
+  padding:8px;
+  border-radius:6px;
+  margin-top:5px;
+}
 </style>
 </head>
 
@@ -24,6 +66,27 @@ button { background:#007aff; color:white; border:none; border-radius:8px; }
 
 <h1>🏍️ Moto Lucro</h1>
 
+<!-- DASHBOARD -->
+<div class="dashboard">
+  <div class="box">
+    Total investido
+    <strong id="totalInvestido">R$ 0,00</strong>
+  </div>
+  <div class="box">
+    Total vendido
+    <strong id="totalVendido">R$ 0,00</strong>
+  </div>
+  <div class="box">
+    Lucro total
+    <strong id="lucroTotal">R$ 0,00</strong>
+  </div>
+  <div class="box">
+    Motos cadastradas
+    <strong id="qtdMotos">0</strong>
+  </div>
+</div>
+
+<!-- CADASTRO -->
 <div class="card">
 <input id="modelo" placeholder="Modelo da moto">
 <input id="compra" placeholder="Valor de compra (R$)">
@@ -76,29 +139,33 @@ function salvar() {
 function adicionarGasto(i) {
   let desc = prompt("Descrição do gasto:");
   let valor = prompt("Valor do gasto:");
-
   if (!desc || !valor) return;
 
-  motos[i].gastos.push({
-    desc,
-    valor: valorNumero(valor)
-  });
-
+  motos[i].gastos.push({ desc, valor: valorNumero(valor) });
   salvarLocal();
   listar();
 }
 
-function totalGastosExtras(m) {
+function totalExtras(m) {
   return m.gastos.reduce((s, g) => s + g.valor, 0);
 }
 
 function listar() {
   lista.innerHTML = "";
 
+  let totalInvestido = 0;
+  let totalVendido = 0;
+  let lucroTotal = 0;
+
   motos.forEach((m, i) => {
-    let extras = totalGastosExtras(m);
-    let total = m.compra + m.pecas + m.doc + extras;
-    let lucro = m.venda - total;
+    let extras = totalExtras(m);
+    let investido = m.compra + m.pecas + m.doc + extras;
+    let lucro = m.venda - investido;
+
+    totalInvestido += investido;
+    totalVendido += m.venda;
+    lucroTotal += lucro;
+
     let classe = lucro >= 0 ? "lucro" : "prejuizo";
 
     lista.innerHTML += `
@@ -121,6 +188,11 @@ function listar() {
       </div>
     `;
   });
+
+  document.getElementById("totalInvestido").innerText = `R$ ${totalInvestido.toFixed(2)}`;
+  document.getElementById("totalVendido").innerText = `R$ ${totalVendido.toFixed(2)}`;
+  document.getElementById("lucroTotal").innerText = `R$ ${lucroTotal.toFixed(2)}`;
+  document.getElementById("qtdMotos").innerText = motos.length;
 }
 
 function editar(i) {
